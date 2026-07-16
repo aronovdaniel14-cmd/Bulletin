@@ -1,4 +1,4 @@
-# Bulletin
+# Bulletin v2.1
 
 Minimalist daily news ticker for Flipper Zero + WiFi Dev Board running
 [FlipperHTTP](https://github.com/jblanked/FlipperHTTP) firmware.
@@ -34,6 +34,35 @@ ufbt launch
 
 If you already configured WiFi via another FlipperHTTP app (FlipWiFi,
 FlipStore, etc.), skip straight to Read News.
+
+
+## v2.1 features
+
+- **Search News**: type a query, get merged results from HN (Algolia) and
+  Reddit - every headline shows source, author, and date.
+- **Full article** (OK on a headline): the story is converted to plain
+  text by the r.jina.ai reader proxy and shown in a scrollable pager
+  (Up/Down to scroll, Back to return).
+- **Photos** (OK inside an article): the first in-article image is
+  resized server-side by wsrv.nl to 112x52 JPEG (~2KB), decoded on-device
+  with tjpgd, and Bayer-dithered to 1-bit for the Flipper screen.
+
+Notes: article/photo features depend on the free r.jina.ai and wsrv.nl
+proxies (rate-limited but keyless). Reddit may occasionally refuse
+non-browser clients; HN results still come through - failures per source
+are skipped, not fatal.
+
+
+## Why search/articles go through r.jina.ai (v2.2)
+
+The FlipperHTTP ESP32 firmware injects a `{}` body into every GET
+request. Strict CDNs and APIs (Fastly/Reddit, Algolia, jina's own GET
+endpoint) reject a GET with a body as **HTTP 400**; Google's Firebase
+tolerates it, which is why the Daily Edition always worked. Instead of
+reflashing the board, search and article fetches are sent as **POST**
+to `https://r.jina.ai/` with `{"url": <target>}` - POST carries a real
+payload, so nothing is injected, and jina performs a clean GET to the
+target server on our behalf.
 
 ## Changing the feed
 
