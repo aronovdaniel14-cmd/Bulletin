@@ -1,16 +1,18 @@
-name: "FAP: Build and Release"
+name: "FAP: Daily Build Release"
 
 on:
   push:
-    branches: [ "main" ]
-    tags:
-      - "v*"
-  pull_request:
+    branches:
+      - main
+  workflow_dispatch:
+
+permissions:
+  contents: write
 
 jobs:
-  ufbt-build-action:
+  ufbt-build:
     runs-on: ubuntu-latest
-    name: "ufbt: Build FAP"
+    name: "Build Flipper App"
 
     steps:
       - name: Checkout
@@ -22,28 +24,28 @@ jobs:
         with:
           sdk-channel: release
 
-      # 🔥 Rename .fap using version tag
-      - name: Rename .fap with version
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Rename FAP
         run: |
-          VERSION=${GITHUB_REF#refs/tags/}
-          mkdir renamed
+          mkdir release
+          DATE=$(date +'%Y-%m-%d')
           for f in ${{ steps.build-app.outputs.fap-artifacts }}/*.fap; do
-            cp "$f" "renamed/myapp-$VERSION.fap"
+            cp "$f" "release/myapp-$DATE.fap"
           done
 
-      # 📦 Upload artifacts (both original + renamed)
-      - name: Upload app artifacts
-        uses: actions/upload-artifact@v4
+      - name: Delete old daily release
+        uses: dev-drprasad/delete-older-releases@v0.3.4
         with:
-          name: ${{ github.event.repository.name }}-${{ steps.build-app.outputs.suffix }}
-          path: |
-            ${{ steps.build-app.outputs.fap-artifacts }}
-            renamed/
+          keep_latest: 0
+          delete_tags: true
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      # 🚀 Create GitHub Release with renamed file
-      - name: Create Release
-        if: startsWith(github.ref, 'refs/tags/')
+      - name: Create Daily Release
         uses: softprops/action-gh-release@v2
         with:
-          files: renamed/*.fap
+          tag_name: daily
+          name: Daily Build
+          body: |
+            Automatically generated Flipper Zero app build.
+            Updated: ${{ github.event.head_commit.timestamp }}
+          files: release/*.fap
