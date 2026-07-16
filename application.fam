@@ -1,0 +1,12 @@
+App(
+    appid="bulletin",
+    name="Bulletin",
+    apptype=FlipperAppType.EXTERNAL,
+    entry_point="bulletin_app",
+    stack_size=4 * 1024,
+    fap_category="GPIO",
+    fap_icon="bulletin.png",
+    fap_author="danielaigen",
+    fap_version="1.2",
+    fap_description="Minimalist daily news ticker via WiFi devboard (FlipperHTTP)",
+)
